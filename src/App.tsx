@@ -9,7 +9,11 @@ function App() {
   // We can use a ref or stable callback to handle updates.
   // Since we want to append text, we need access to the latest state or use functional update.
   const handleResult = useCallback((text: string) => {
-    setDisplayText((prev) => prev + text);
+    console.log('App: handleResult called with:', text);
+    setDisplayText((prev) => {
+      console.log('App: previous displayText length:', prev.length);
+      return prev + text;
+    });
   }, []);
 
   const {
