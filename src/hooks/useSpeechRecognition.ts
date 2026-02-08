@@ -8,7 +8,6 @@ interface IWindow extends Window {
 
 export interface SpeechRecognitionHook {
   isListening: boolean;
-  transcript: string;
   interimTranscript: string;
   startListening: () => void;
   stopListening: () => void;
@@ -22,7 +21,6 @@ interface UseSpeechRecognitionProps {
 
 const useSpeechRecognition = ({ onResult }: UseSpeechRecognitionProps = {}): SpeechRecognitionHook => {
   const [isListening, setIsListening] = useState(false);
-  const [transcript, setTranscript] = useState('');
   const [interimTranscript, setInterimTranscript] = useState('');
   const [recognition, setRecognition] = useState<any>(null);
 
@@ -62,12 +60,10 @@ const useSpeechRecognition = ({ onResult }: UseSpeechRecognitionProps = {}): Spe
         }
 
         if (finalTranscript) {
-          const now = new Date();
-          const timeString = `[${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}]`;
-          const formattedText = `${timeString} ${finalTranscript}\n\n`;
-          console.log('Appending formatted text:', formattedText);
+          // user requested pure transcription, no timestamp
+          const formattedText = `${finalTranscript}\n`;
+          console.log('Appending text:', formattedText);
 
-          setTranscript((prev) => prev + formattedText);
           if (onResultRef.current) {
             onResultRef.current(formattedText);
           }
@@ -119,7 +115,6 @@ const useSpeechRecognition = ({ onResult }: UseSpeechRecognitionProps = {}): Spe
   }, [recognition, isListening]);
 
   const resetTranscript = useCallback(() => {
-    setTranscript('');
     setInterimTranscript('');
   }, []);
 
@@ -127,7 +122,6 @@ const useSpeechRecognition = ({ onResult }: UseSpeechRecognitionProps = {}): Spe
 
   return {
     isListening,
-    transcript,
     interimTranscript,
     startListening,
     stopListening,
