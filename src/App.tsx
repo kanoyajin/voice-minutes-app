@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import useSpeechRecognition from './hooks/useSpeechRecognition';
 import TranscriptEditor from './components/TranscriptEditor';
 import Toolbar from './components/Toolbar';
@@ -9,17 +9,26 @@ function App() {
   const [debugLogs, setDebugLogs] = useState<string[]>([]);
   // We can use a ref or stable callback to handle updates.
   // Since we want to append text, we need access to the latest state or use functional update.
-  const handleResult = useCallback((text: string) => {
-    console.log('App: handleResult called with:', text);
-    const logMsg = `[${new Date().toLocaleTimeString()}] Append: "${text.slice(0, 10)}..." (len: ${text.length})`;
 
+  // Load from local storage on mount
+  useEffect(() => {
+    const saved = localStorage.getItem('voice-minutes-draft');
+    if (saved) {
+      setDisplayText(saved);
+      setDebugLogs(prev => [`[${new Date().toLocaleTimeString()}] Loaded saved draft (len: ${saved.length})`, ...prev]);
+    }
+  }, []);
+
+  // Save to local storage on change
+  useEffect(() => {
+    localStorage.setItem('voice-minutes-draft', displayText);
+  }, [displayText]);
+
+  const handleResult = useCallback((text: string) => {
+    const logMsg = `[${new Date().toLocaleTimeString()}] Append: "${text.slice(0, 10)}..." (len: ${text.length})`;
     setDebugLogs(prevLogs => [logMsg, ...prevLogs].slice(0, 50));
 
-    setDisplayText((prev) => {
-      const newText = prev + text;
-      console.log(`App update: prevLen=${prev.length}, addLen=${text.length}, newLen=${newText.length}`);
-      return newText;
-    });
+    setDisplayText((prev) => prev + text);
   }, []);
 
   const {
@@ -60,9 +69,10 @@ function App() {
   }, [displayText]);
 
   const handleClear = useCallback(() => {
-    if (confirm('Are you sure you want to clear the transcript?')) {
+    if (confirm('議事録をクリアしてもよろしいですか？\n(Clear transcript?)')) {
       resetTranscript();
       setDisplayText('');
+      localStorage.removeItem('voice-minutes-draft');
     }
   }, [resetTranscript]);
 
@@ -78,28 +88,30 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 text-gray-100 flex flex-col font-sans">
-      <header className="p-6 border-b border-gray-800 flex justify-between items-center bg-gray-900/50 backdrop-blur-sm sticky top-0 z-10">
+    <div className="min-h-screen bg-gray-100 text-gray-800 flex flex-col font-sans">
+      <header className="px-6 py-4 bg-white border-b border-gray-200 flex justify-between items-center sticky top-0 z-10 shadow-sm">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-r from-indigo-500 to-purple-500 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+          <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center shadow-md">
             <span className="text-white font-bold text-lg">V</span>
           </div>
           <div className="flex flex-col">
-            <h1 className="text-xl font-semibold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-indigo-200 to-purple-200">
+            <h1 className="text-xl font-bold text-gray-800">
               音声入力議事録
             </h1>
-            <span className="text-xs text-gray-500 font-mono">v1.1 Debug</span>
+            <span className="text-xs text-gray-500 font-mono">v2.0 Document Mode</span>
           </div>
         </div>
         <RecordingIndicator isListening={isListening} />
       </header>
 
-      <main className="flex-1 overflow-hidden relative flex flex-col p-4 sm:p-6 lg:p-8">
-        <TranscriptEditor
-          transcript={displayText}
-          interimTranscript={interimTranscript}
-          onChange={handleTextChange}
-        />
+      <main className="flex-1 overflow-auto p-4 sm:p-8 bg-gray-100 flex justify-center">
+        <div className="w-full max-w-4xl bg-white shadow-xl min-h-[calc(100vh-12rem)] p-8 sm:p-12 rounded-sm mx-auto border border-gray-200">
+          <TranscriptEditor
+            transcript={displayText}
+            interimTranscript={interimTranscript}
+            onChange={handleTextChange}
+          />
+        </div>
       </main>
 
       <Toolbar
@@ -110,10 +122,11 @@ function App() {
         onClear={handleClear}
         hasContent={displayText.length > 0}
       />
-      <div className="bg-black text-green-400 p-2 text-xs font-mono h-32 overflow-y-auto border-t border-gray-800">
-        <p>Debug Logs (Latest on top):</p>
+
+      <div className="bg-gray-900 text-gray-400 p-2 text-xs font-mono h-24 overflow-y-auto border-t border-gray-800">
+        <p className="mb-1 text-gray-200">Debug Logs:</p>
         {debugLogs.map((log, i) => (
-          <div key={i} className="border-b border-gray-900 py-1">{log}</div>
+          <div key={i} className="border-b border-gray-800 py-0.5">{log}</div>
         ))}
       </div>
     </div>
