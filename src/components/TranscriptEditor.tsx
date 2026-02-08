@@ -33,7 +33,7 @@ const TranscriptEditor: React.FC<TranscriptEditorProps> = ({
             <div className="flex-1 relative border border-gray-700 rounded-lg overflow-hidden bg-gray-800/50 backdrop-blur-sm shadow-xl">
                 <textarea
                     ref={textareaRef}
-                    className="w-full h-full p-6 bg-transparent text-gray-100 resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all font-sans text-lg leading-relaxed"
+                    className="w-full h-full p-6 bg-transparent text-gray-100 resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all font-sans text-lg leading-relaxed break-words whitespace-pre-wrap overflow-y-auto"
                     value={transcript}
                     onChange={handleChange}
                     placeholder="ここに音声入力されたテキストが表示されます..."
