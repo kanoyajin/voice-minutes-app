@@ -77,7 +77,9 @@ const useSpeechRecognition = ({ onResult }: UseSpeechRecognitionProps = {}): Spe
         setIsListening(false);
       };
 
-      setRecognition(recognitionInstance);
+      return () => {
+        recognitionInstance.abort();
+      };
     }
   }, []);
 
