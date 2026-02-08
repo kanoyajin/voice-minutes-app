@@ -6,13 +6,19 @@ import RecordingIndicator from './components/RecordingIndicator';
 
 function App() {
   const [displayText, setDisplayText] = useState('');
+  const [debugLogs, setDebugLogs] = useState<string[]>([]);
   // We can use a ref or stable callback to handle updates.
   // Since we want to append text, we need access to the latest state or use functional update.
   const handleResult = useCallback((text: string) => {
     console.log('App: handleResult called with:', text);
+    const logMsg = `[${new Date().toLocaleTimeString()}] Append: "${text.slice(0, 10)}..." (len: ${text.length})`;
+
+    setDebugLogs(prevLogs => [logMsg, ...prevLogs].slice(0, 50));
+
     setDisplayText((prev) => {
-      console.log('App: previous displayText length:', prev.length);
-      return prev + text;
+      const newText = prev + text;
+      console.log(`App update: prevLen=${prev.length}, addLen=${text.length}, newLen=${newText.length}`);
+      return newText;
     });
   }, []);
 
@@ -78,9 +84,12 @@ function App() {
           <div className="w-8 h-8 rounded-lg bg-gradient-to-r from-indigo-500 to-purple-500 flex items-center justify-center shadow-lg shadow-indigo-500/20">
             <span className="text-white font-bold text-lg">V</span>
           </div>
-          <h1 className="text-xl font-semibold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-indigo-200 to-purple-200">
-            音声入力議事録
-          </h1>
+          <div className="flex flex-col">
+            <h1 className="text-xl font-semibold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-indigo-200 to-purple-200">
+              音声入力議事録
+            </h1>
+            <span className="text-xs text-gray-500 font-mono">v1.1 Debug</span>
+          </div>
         </div>
         <RecordingIndicator isListening={isListening} />
       </header>
@@ -101,6 +110,12 @@ function App() {
         onClear={handleClear}
         hasContent={displayText.length > 0}
       />
+      <div className="bg-black text-green-400 p-2 text-xs font-mono h-32 overflow-y-auto border-t border-gray-800">
+        <p>Debug Logs (Latest on top):</p>
+        {debugLogs.map((log, i) => (
+          <div key={i} className="border-b border-gray-900 py-1">{log}</div>
+        ))}
+      </div>
     </div>
   );
 }
