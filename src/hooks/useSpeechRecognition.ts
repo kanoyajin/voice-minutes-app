@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 
 // Web Speech API Types
 interface IWindow extends Window {
@@ -26,6 +26,12 @@ const useSpeechRecognition = ({ onResult }: UseSpeechRecognitionProps = {}): Spe
   const [interimTranscript, setInterimTranscript] = useState('');
   const [recognition, setRecognition] = useState<any>(null);
 
+  const onResultRef = useRef(onResult);
+
+  useEffect(() => {
+    onResultRef.current = onResult;
+  }, [onResult]);
+
   useEffect(() => {
     const { webkitSpeechRecognition, SpeechRecognition } = (window as unknown) as IWindow;
     const SpeechRecognitionConstructor = SpeechRecognition || webkitSpeechRecognition;
@@ -40,8 +46,15 @@ const useSpeechRecognition = ({ onResult }: UseSpeechRecognitionProps = {}): Spe
         let finalTranscript = '';
         let currentInterimTranscript = '';
 
+        console.log('SpeechRecognition Event:', {
+          resultIndex: event.resultIndex,
+          resultsLength: event.results.length,
+          results: event.results
+        });
+
         for (let i = event.resultIndex; i < event.results.length; ++i) {
           if (event.results[i].isFinal) {
+            console.log('Final Result Found:', event.results[i][0].transcript);
             finalTranscript += event.results[i][0].transcript;
           } else {
             currentInterimTranscript += event.results[i][0].transcript;
@@ -52,9 +65,11 @@ const useSpeechRecognition = ({ onResult }: UseSpeechRecognitionProps = {}): Spe
           const now = new Date();
           const timeString = `[${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}]`;
           const formattedText = `${timeString} ${finalTranscript}\n\n`;
+          console.log('Appending formatted text:', formattedText);
+
           setTranscript((prev) => prev + formattedText);
-          if (onResult) {
-            onResult(formattedText);
+          if (onResultRef.current) {
+            onResultRef.current(formattedText);
           }
         }
         setInterimTranscript(currentInterimTranscript);
