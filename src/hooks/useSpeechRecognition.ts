@@ -61,7 +61,12 @@ const useSpeechRecognition = ({ onResult }: UseSpeechRecognitionProps = {}): Spe
 
         if (finalTranscript) {
           // user requested pure transcription, no timestamp
-          const formattedText = `${finalTranscript}\n`;
+          let text = finalTranscript.trim();
+          // Auto-append Japanese punctuation if missing
+          if (text && !text.match(/[。！？\.\!\?]$/)) {
+            text += '。';
+          }
+          const formattedText = `${text}\n`;
           console.log('Appending text:', formattedText);
 
           if (onResultRef.current) {
